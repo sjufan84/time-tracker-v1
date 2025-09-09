@@ -1,16 +1,18 @@
 import TasksClient from '@/components/TasksClient';
+import { use } from 'react';
 import { queries } from '@/lib/database';
 import { Project, Task } from '@/lib/types';
 import { notFound } from 'next/navigation';
 
-export default function ProjectDetailsPage({ params }: { params: { id: string } }) {
-  const project = queries.getProjectById.get(params.id) as Project;
+export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const project = queries.getProjectById.get(id) as Project;
 
   if (!project) {
     notFound();
   }
 
-  const tasks = queries.getTasksByProject.all(params.id) as Task[];
+  const tasks = queries.getTasksByProject.all(id) as Task[];
 
   return (
     <div>

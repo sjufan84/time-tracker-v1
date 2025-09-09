@@ -41,8 +41,8 @@ export default function InvoicingClient({ projects }: { projects: Project[] }) {
     const rows = invoice.entries.map(entry => [
       new Date(entry.start_time).toLocaleDateString(),
       entry.task_name,
-      (entry.duration / 3600).toFixed(2),
-      ((entry.duration / 3600) * (projects.find(p => p.id === parseInt(projectId!))?.billing_rate || 0)).toFixed(2)
+      (entry?.duration || 0 / 3600).toFixed(2),
+      ((entry?.duration || 0 / 3600) * (projects.find(p => p.id === parseInt(projectId!))?.billing_rate || 0)).toFixed(2)
     ]);
     const csvContent = "data:text/csv;charset=utf-8,"
       + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');

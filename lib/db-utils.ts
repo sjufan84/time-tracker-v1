@@ -12,7 +12,11 @@ import type {
   StartTimerRequest,
   StopTimerRequest,
   TimeStats,
-  DateRange
+  DateRange,
+  TimeEntryWithDetails,
+  TaskWithProject,
+  ProjectWithTime,
+  TaskWithTime
 } from './types';
 
 // Project utilities
@@ -68,12 +72,12 @@ export const taskUtils = {
     return queries.getTaskById.get(result.lastInsertRowid) as Task;
   },
 
-  getByProject: (projectId: number): Task[] => {
-    return queries.getTasksByProject.all(projectId) as Task[];
+  getByProject: (projectId: number): TaskWithProject[] => {
+    return queries.getTasksByProject.all(projectId) as TaskWithProject[];
   },
 
-  getAll: (): Task[] => {
-    return queries.getAllTasks.all() as Task[];
+  getAll: (): TaskWithProject[] => {
+    return queries.getAllTasks.all() as TaskWithProject[];
   },
 
   getById: (id: number): Task | null => {
@@ -103,7 +107,7 @@ export const taskUtils = {
 // Time entry utilities
 export const timeEntryUtils = {
   create: (data: CreateTimeEntryRequest): TimeEntry => {
-    const result = queries.insertTimeEntry.run(
+    queries.insertTimeEntry.run(
       data.task_id,
       data.description || null,
       data.start_time,
@@ -117,20 +121,20 @@ export const timeEntryUtils = {
     return queries.getTimeEntriesByTask.all(taskId) as TimeEntry[];
   },
 
-  getByDateRange: (dateRange: DateRange): TimeEntry[] => {
+  getByDateRange: (dateRange: DateRange): TimeEntryWithDetails[] => {
     return queries.getTimeEntriesByDateRange.all(
       dateRange.start_date,
       dateRange.end_date
-    ) as TimeEntry[];
+    ) as TimeEntryWithDetails[];
   },
 
-  getActive: (): TimeEntry[] => {
-    return queries.getActiveTimeEntries.all() as TimeEntry[];
+  getActive: (): TimeEntryWithDetails[] => {
+    return queries.getActiveTimeEntries.all() as TimeEntryWithDetails[];
   },
 
   update: (id: number, data: UpdateTimeEntryRequest): TimeEntry | null => {
-    const entry = queries.getTimeEntriesByTask.all(data.task_id || 0)
-      .find((e: any) => e.id === id) as TimeEntry | null;
+    const allEntries = queries.getTimeEntriesByTask.all(data.task_id || 0) as TimeEntry[];
+    const entry = allEntries.find((e: TimeEntry) => e.id === id) as TimeEntry | null;
     
     if (!entry) return null;
 
@@ -142,13 +146,12 @@ export const timeEntryUtils = {
       id
     );
 
-    return queries.getTimeEntriesByTask.all(entry.task_id)
-      .find((e: any) => e.id === id) as TimeEntry;
+    const updatedEntries = queries.getTimeEntriesByTask.all(entry.task_id) as TimeEntry[];
+    return updatedEntries.find((e: TimeEntry) => e.id === id) as TimeEntry;
   },
 
   stop: (id: number): TimeEntry | null => {
-    const entry = queries.getTimeEntriesByTask.all(0)
-      .find((e: any) => e.id === id) as TimeEntry | null;
+    const entry = queries.getTimeEntryById.get(id) as TimeEntry | null;
     
     if (!entry || entry.end_time) return null;
 
@@ -158,8 +161,7 @@ export const timeEntryUtils = {
 
     queries.stopTimeEntry.run(endTime, duration, id);
 
-    return queries.getTimeEntriesByTask.all(entry.task_id)
-      .find((e: any) => e.id === id) as TimeEntry;
+    return queries.getTimeEntryById.get(id) as TimeEntry;
   },
 
   delete: (id: number): boolean => {
@@ -183,19 +185,19 @@ export const timerUtils = {
     return timeEntryUtils.stop(data.time_entry_id);
   },
 
-  getActive: (): TimeEntry[] => {
+  getActive: (): TimeEntryWithDetails[] => {
     return timeEntryUtils.getActive();
   }
 };
 
 // Statistics utilities
 export const statsUtils = {
-  getProjectStats: () => {
-    return queries.getTotalTimeByProject.all() as any[];
+  getProjectStats: (): ProjectWithTime[] => {
+    return queries.getTotalTimeByProject.all() as ProjectWithTime[];
   },
 
-  getTaskStats: () => {
-    return queries.getTotalTimeByTask.all() as any[];
+  getTaskStats: (): TaskWithTime[] => {
+    return queries.getTotalTimeByTask.all() as TaskWithTime[];
   },
 
   getTimeStats: (entries: TimeEntry[]): TimeStats => {

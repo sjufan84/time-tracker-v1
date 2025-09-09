@@ -206,5 +206,78 @@ export const queries = {
     WHERE te.duration IS NOT NULL
     GROUP BY t.id, t.name, p.name, p.color
     ORDER BY total_duration DESC
+  `),
+
+  // Additional time entry queries
+  getAllTimeEntries: db.prepare(`
+    SELECT te.*, t.name as task_name, p.name as project_name, p.color as project_color, p.id as project_id
+    FROM time_entries te
+    JOIN tasks t ON te.task_id = t.id
+    JOIN projects p ON t.project_id = p.id
+    ORDER BY te.start_time DESC
+    LIMIT ? OFFSET ?
+  `),
+
+  getTimeEntriesCount: db.prepare(`
+    SELECT COUNT(*) as count FROM time_entries
+  `),
+
+  getTimeEntriesByProject: db.prepare(`
+    SELECT te.*, t.name as task_name, p.name as project_name, p.color as project_color, p.id as project_id
+    FROM time_entries te
+    JOIN tasks t ON te.task_id = t.id
+    JOIN projects p ON t.project_id = p.id
+    WHERE p.id = ?
+    ORDER BY te.start_time DESC
+  `),
+
+  getTimeEntriesByProjectAndDateRange: db.prepare(`
+    SELECT te.*, t.name as task_name, p.name as project_name, p.color as project_color, p.id as project_id
+    FROM time_entries te
+    JOIN tasks t ON te.task_id = t.id
+    JOIN projects p ON t.project_id = p.id
+    WHERE p.id = ? AND te.start_time >= ? AND te.start_time <= ?
+    ORDER BY te.start_time DESC
+  `),
+
+  getTimeEntriesByTaskAndDateRange: db.prepare(`
+    SELECT te.*, t.name as task_name, p.name as project_name, p.color as project_color, p.id as project_id
+    FROM time_entries te
+    JOIN tasks t ON te.task_id = t.id
+    JOIN projects p ON t.project_id = p.id
+    WHERE t.id = ? AND te.start_time >= ? AND te.start_time <= ?
+    ORDER BY te.start_time DESC
+  `),
+
+  getTimeEntriesStats: db.prepare(`
+    SELECT 
+      COUNT(*) as total_entries,
+      COUNT(CASE WHEN end_time IS NULL THEN 1 END) as active_entries,
+      COUNT(CASE WHEN end_time IS NOT NULL THEN 1 END) as completed_entries,
+      SUM(CASE WHEN duration IS NOT NULL THEN duration ELSE 0 END) as total_duration,
+      AVG(CASE WHEN duration IS NOT NULL THEN duration ELSE NULL END) as avg_duration
+    FROM time_entries
+  `),
+
+  getTimeEntriesStatsByProject: db.prepare(`
+    SELECT 
+      p.id as project_id,
+      p.name as project_name,
+      p.color as project_color,
+      COUNT(te.id) as total_entries,
+      COUNT(CASE WHEN te.end_time IS NULL THEN 1 END) as active_entries,
+      COUNT(CASE WHEN te.end_time IS NOT NULL THEN 1 END) as completed_entries,
+      SUM(CASE WHEN te.duration IS NOT NULL THEN te.duration ELSE 0 END) as total_duration,
+      AVG(CASE WHEN te.duration IS NOT NULL THEN te.duration ELSE NULL END) as avg_duration
+    FROM projects p
+    LEFT JOIN tasks t ON p.id = t.project_id
+    LEFT JOIN time_entries te ON t.id = te.task_id
+    GROUP BY p.id, p.name, p.color
+    ORDER BY total_duration DESC
+  `),
+
+  // Get time entry by ID
+  getTimeEntryById: db.prepare(`
+    SELECT * FROM time_entries WHERE id = ?
   `)
 };

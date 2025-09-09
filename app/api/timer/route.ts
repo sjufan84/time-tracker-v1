@@ -41,21 +41,28 @@ export async function PUT(request: NextRequest) {
   try {
     const body: StopTimerRequest = await request.json();
     
+    console.log('PUT /api/timer - Request body:', body);
+    
     if (!body.time_entry_id || isNaN(body.time_entry_id)) {
+      console.log('PUT /api/timer - Invalid time_entry_id:', body.time_entry_id);
       return NextResponse.json(
         { error: 'Valid time entry ID is required' },
         { status: 400 }
       );
     }
 
+    console.log('PUT /api/timer - Attempting to stop timer:', body.time_entry_id);
     const timeEntry = timerUtils.stop(body);
+    
     if (!timeEntry) {
+      console.log('PUT /api/timer - Time entry not found or already stopped:', body.time_entry_id);
       return NextResponse.json(
         { error: 'Time entry not found or already stopped' },
         { status: 404 }
       );
     }
 
+    console.log('PUT /api/timer - Successfully stopped timer:', timeEntry);
     return NextResponse.json(timeEntry);
   } catch (error) {
     console.error('Error stopping timer:', error);

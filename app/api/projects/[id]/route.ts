@@ -4,18 +4,19 @@ import type { UpdateProjectRequest } from '@/lib/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const id = parseInt(params.id);
-    if (isNaN(id)) {
+    const idInt = parseInt(id);
+    if (isNaN(idInt)) {
       return NextResponse.json(
         { error: 'Invalid project ID' },
         { status: 400 }
       );
     }
 
-    const project = projectUtils.getById(id);
+    const project = projectUtils.getById(idInt);
     if (!project) {
       return NextResponse.json(
         { error: 'Project not found' },
@@ -35,10 +36,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const id = parseInt(await (await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: 'Invalid project ID' },
@@ -68,10 +69,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const id = parseInt(await (await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: 'Invalid project ID' },

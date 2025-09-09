@@ -30,13 +30,20 @@ export function useTimer() {
   };
 
   const stopTimer = async (time_entry_id: number) => {
+    console.log('useTimer: Attempting to stop timer:', time_entry_id);
     const response = await fetch('/api/timer', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ time_entry_id }),
     });
+    
+    console.log('useTimer: Stop timer response:', response.status, response.statusText);
+    
     if (response.ok) {
       setActiveTimers((prev) => prev.filter((timer) => timer.id !== time_entry_id));
+    } else {
+      const errorData = await response.json();
+      console.error('useTimer: Failed to stop timer:', errorData);
     }
   };
 
