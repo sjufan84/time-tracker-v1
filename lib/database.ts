@@ -162,14 +162,13 @@ export const queries = {
     ORDER BY te.start_time DESC
   `),
   
-  getActiveTimeEntry: db.prepare(`
+  getActiveTimeEntries: db.prepare(`
     SELECT te.*, t.name as task_name, p.name as project_name
     FROM time_entries te
     JOIN tasks t ON te.task_id = t.id
     JOIN projects p ON t.project_id = p.id
     WHERE te.end_time IS NULL
     ORDER BY te.start_time DESC
-    LIMIT 1
   `),
   
   updateTimeEntry: db.prepare(`
