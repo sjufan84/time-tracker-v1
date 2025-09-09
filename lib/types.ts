@@ -1,10 +1,9 @@
-// Database types for the time tracker application
-
 export interface Project {
   id: number;
   name: string;
   description?: string;
   color: string;
+  billing_rate?: number;
   created_at: string;
   updated_at: string;
 }
@@ -17,9 +16,9 @@ export interface Task {
   status: 'active' | 'completed' | 'paused';
   created_at: string;
   updated_at: string;
-  // Joined fields
   project_name?: string;
   project_color?: string;
+  total_duration?: number;
 }
 
 export interface TimeEntry {
@@ -28,34 +27,26 @@ export interface TimeEntry {
   description?: string;
   start_time: string;
   end_time?: string;
-  duration?: number; // in seconds
+  duration?: number;
   created_at: string;
   updated_at: string;
-  // Joined fields
   task_name?: string;
   project_name?: string;
   project_color?: string;
 }
 
-export interface ProjectWithStats extends Project {
-  total_duration?: number;
-}
-
-export interface TaskWithStats extends Task {
-  total_duration?: number;
-}
-
-// API request/response types
 export interface CreateProjectRequest {
   name: string;
   description?: string;
   color?: string;
+  billing_rate?: number;
 }
 
 export interface UpdateProjectRequest {
   name?: string;
   description?: string;
   color?: string;
+  billing_rate?: number;
 }
 
 export interface CreateTaskRequest {
@@ -80,6 +71,7 @@ export interface CreateTimeEntryRequest {
 }
 
 export interface UpdateTimeEntryRequest {
+  task_id?: number;
   description?: string;
   start_time?: string;
   end_time?: string;
@@ -95,7 +87,6 @@ export interface StopTimerRequest {
   time_entry_id: number;
 }
 
-// Utility types
 export interface TimeStats {
   total_duration: number;
   entries_count: number;
