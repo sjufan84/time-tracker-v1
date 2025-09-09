@@ -21,7 +21,8 @@ export const projectUtils = {
     const result = queries.insertProject.run(
       data.name,
       data.description || null,
-      data.color || '#3B82F6'
+      data.color || '#3B82F6',
+      data.billing_rate || null
     );
     return queries.getProjectById.get(result.lastInsertRowid) as Project;
   },
@@ -42,6 +43,7 @@ export const projectUtils = {
       data.name || project.name,
       data.description !== undefined ? data.description : project.description,
       data.color || project.color,
+      data.billing_rate !== undefined ? data.billing_rate : project.billing_rate,
       id
     );
 

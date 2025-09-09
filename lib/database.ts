@@ -24,6 +24,7 @@ const createTables = () => {
       name TEXT NOT NULL,
       description TEXT,
       color TEXT DEFAULT '#3B82F6',
+      billing_rate REAL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -76,8 +77,8 @@ export default db;
 export const queries = {
   // Projects
   insertProject: db.prepare(`
-    INSERT INTO projects (name, description, color)
-    VALUES (?, ?, ?)
+    INSERT INTO projects (name, description, color, billing_rate)
+    VALUES (?, ?, ?, ?)
   `),
   
   getAllProjects: db.prepare(`
@@ -91,7 +92,7 @@ export const queries = {
   
   updateProject: db.prepare(`
     UPDATE projects 
-    SET name = ?, description = ?, color = ?, updated_at = CURRENT_TIMESTAMP
+    SET name = ?, description = ?, color = ?, billing_rate = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `),
   
@@ -106,15 +107,20 @@ export const queries = {
   `),
   
   getTasksByProject: db.prepare(`
-    SELECT * FROM tasks 
-    WHERE project_id = ? 
-    ORDER BY created_at DESC
+    SELECT t.*, SUM(te.duration) as total_duration
+    FROM tasks t
+    LEFT JOIN time_entries te ON t.id = te.task_id
+    WHERE t.project_id = ?
+    GROUP BY t.id
+    ORDER BY t.created_at DESC
   `),
   
   getAllTasks: db.prepare(`
-    SELECT t.*, p.name as project_name, p.color as project_color
+    SELECT t.*, p.name as project_name, p.color as project_color, SUM(te.duration) as total_duration
     FROM tasks t
     JOIN projects p ON t.project_id = p.id
+    LEFT JOIN time_entries te ON t.id = te.task_id
+    GROUP BY t.id
     ORDER BY t.created_at DESC
   `),
   
