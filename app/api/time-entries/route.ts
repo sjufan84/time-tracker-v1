@@ -91,15 +91,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if there's already an active timer for this task
-    const activeEntries = queries.getActiveTimeEntries.all() as TimeEntry[];
-    const hasActiveTimer = activeEntries.some(entry => entry.task_id === body.task_id);
+    // Manual time entry vs. starting a timer
+    if (body.start_time && body.end_time) {
+      // Manual entry
+      const startTime = new Date(body.start_time);
+      const endTime = new Date(body.end_time);
+
+      if (startTime >= endTime) {
+        return NextResponse.json(
+          { error: 'Start time must be before end time' },
+          { status: 400 }
+        );
+      }
+
+      body.duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+    } else {
+      // Starting a timer
+      body.start_time = new Date().toISOString();
+
+      // Check if there's already an active timer for this task
+      const activeEntries = queries.getActiveTimeEntries.all() as TimeEntry[];
+      const hasActiveTimer = activeEntries.some(entry => entry.task_id === body.task_id);
     
-    if (hasActiveTimer) {
-      return NextResponse.json(
-        { error: 'Task already has an active timer' },
-        { status: 409 }
-      );
+      if (hasActiveTimer) {
+        return NextResponse.json(
+          { error: 'Task already has an active timer' },
+          { status: 409 }
+        );
+      }
     }
 
     const newTimeEntry = timeEntryUtils.create(body);

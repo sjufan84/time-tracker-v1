@@ -1,10 +1,11 @@
 import ReportsClient from '@/components/ReportsClient';
 import { queries } from '@/lib/database';
-import { Project, TimeEntry } from '@/lib/types';
+import { Project, Task, TimeEntryWithDetails } from '@/lib/types';
 import { endOfMonth, startOfMonth } from 'date-fns';
 
 export default function ReportsPage() {
   const projects = queries.getAllProjects.all() as Project[];
+  const tasks = queries.getAllTasks.all() as Task[];
 
   const start = startOfMonth(new Date());
   const end = endOfMonth(new Date());
@@ -12,12 +13,12 @@ export default function ReportsPage() {
   const timeEntries = queries.getTimeEntriesByDateRange.all(
     start.toISOString(),
     end.toISOString()
-  ) as TimeEntry[];
+  ) as TimeEntryWithDetails[];
 
   return (
     <div>
       <h1 className="text-3xl font-bold mb-8">Reports</h1>
-      <ReportsClient initialTimeEntries={timeEntries} projects={projects} />
+      <ReportsClient initialTimeEntries={timeEntries} projects={projects} tasks={tasks} />
     </div>
   );
 }

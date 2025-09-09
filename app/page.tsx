@@ -1,16 +1,18 @@
 import DashboardClient from '@/components/DashboardClient';
 import { queries } from '@/lib/database';
-import { Task } from '@/lib/types';
+import { Project, Task } from '@/lib/types';
 
 async function getStats() {
   try {
+    // This fetch needs to be aligned with your API deployment
     const res = await fetch('http://localhost:3000/api/stats', { cache: 'no-store' });
     if (!res.ok) {
       throw new Error('Failed to fetch stats');
     }
     return res.json();
   } catch (error) {
-    console.error(error);
+    console.error('Failed to fetch stats:', error);
+    // Return default stats in case of an error
     return {
       today: 0,
       this_week: 0,
@@ -19,13 +21,20 @@ async function getStats() {
 }
 
 export default async function Home() {
-  const recentTasks = queries.getAllTasks.all().slice(0, 5) as Task[];
+  const allTasks = queries.getAllTasks.all() as Task[];
+  const allProjects = queries.getAllProjects.all() as Project[];
   const stats = await getStats();
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-      <DashboardClient initialTasks={recentTasks} initialStats={stats} />
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+      </div>
+      <DashboardClient
+        initialTasks={allTasks}
+        initialStats={stats}
+        projects={allProjects}
+      />
     </div>
   );
 }

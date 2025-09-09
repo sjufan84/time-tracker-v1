@@ -1,26 +1,52 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { Task, TimeEntry } from '@/lib/types';
+import { useEffect, useState, useCallback } from 'react';
+import { Project, Task, TimeEntry, TimeEntryWithDetails } from '@/lib/types';
 import { useTimer } from '@/hooks/useTimer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Play, Square, Clock, Activity, TrendingUp, Calendar } from 'lucide-react';
+import { Play, Square, Clock, Activity, TrendingUp, Calendar, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { formatDuration } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import TimeEntryForm from './TimeEntryForm';
 
 interface TimerWithElapsed extends TimeEntry {
   elapsed: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function DashboardClient({ initialTasks, initialStats }: { initialTasks: Task[], initialStats: any }) {
+export default function DashboardClient({ initialTasks, initialStats, projects }: { initialTasks: Task[], initialStats: any, projects: Project[] }) {
   const { activeTimers, startTimer, stopTimer } = useTimer();
-  const [tasks] = useState<Task[]>(initialTasks);
-  const [stats] = useState(initialStats);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [stats, setStats] = useState(initialStats);
   const [timersWithElapsed, setTimersWithElapsed] = useState<TimerWithElapsed[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/stats', { cache: 'no-store' });
+      if (res.ok) {
+        const newStats = await res.json();
+        setStats(newStats);
+      }
+    } catch (error) {
+      console.error('Failed to refetch stats:', error);
+    }
+  }, []);
+
+  const fetchTasks = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tasks');
+      if(res.ok) {
+        const newTasks = await res.json();
+        setTasks(newTasks);
+      }
+    } catch (error) {
+      console.error('Failed to refetch tasks:', error);
+    }
+  }, []);
 
   useEffect(() => {
     if (activeTimers.length > 0) {
@@ -39,10 +65,22 @@ export default function DashboardClient({ initialTasks, initialStats }: { initia
     }
   }, [activeTimers]);
 
+  const handleSave = () => {
+    fetchStats();
+    fetchTasks();
+  };
+
   const totalElapsedToday = timersWithElapsed.reduce((total, timer) => total + timer.elapsed, 0);
 
   return (
     <div className="space-y-8">
+       <div className="flex justify-end">
+        <Button onClick={() => setIsFormOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Manual Entry
+        </Button>
+      </div>
+
       {/* Active Timers Section */}
       {timersWithElapsed.length > 0 ? (
         <Card className="border-l-4 border-l-green-500 shadow-lg">
@@ -52,7 +90,7 @@ export default function DashboardClient({ initialTasks, initialStats }: { initia
                 <Activity className="h-5 w-5 text-green-500" />
                 Active Timers
                 <Badge variant="secondary" className="ml-2">
-                  {timersWithElapsed.length}
+                  {activeTimers.length}
                 </Badge>
               </CardTitle>
               <div className="flex items-center gap-4">
@@ -183,9 +221,9 @@ export default function DashboardClient({ initialTasks, initialStats }: { initia
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{timersWithElapsed.length}</div>
+            <div className="text-2xl font-bold">{activeTimers.length}</div>
             <p className="text-xs text-muted-foreground">
-              {timersWithElapsed.length === 0 ? 'No active timers' : 'Currently tracking'}
+              {activeTimers.length === 0 ? 'No active timers' : 'Currently tracking'}
             </p>
           </CardContent>
         </Card>
@@ -215,7 +253,7 @@ export default function DashboardClient({ initialTasks, initialStats }: { initia
         <CardContent>
           <div className="space-y-3">
             {tasks.slice(0, 8).map((task) => {
-              const isActive = timersWithElapsed.some(timer => timer.task_id === task.id);
+              const isActive = activeTimers.some(timer => timer.task_id === task.id);
               return (
                 <div
                   key={task.id}
@@ -274,6 +312,13 @@ export default function DashboardClient({ initialTasks, initialStats }: { initia
           )}
         </CardContent>
       </Card>
+      <TimeEntryForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        projects={projects}
+        tasks={tasks}
+        onSave={handleSave}
+      />
     </div>
   );
 }
