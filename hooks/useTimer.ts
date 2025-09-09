@@ -4,17 +4,17 @@ import { useState, useEffect } from 'react';
 import { TimeEntry } from '@/lib/types';
 
 export function useTimer() {
-  const [activeTimer, setActiveTimer] = useState<TimeEntry | null>(null);
+  const [activeTimers, setActiveTimers] = useState<TimeEntry[]>([]);
 
   useEffect(() => {
-    const fetchActiveTimer = async () => {
+    const fetchActiveTimers = async () => {
       const response = await fetch('/api/timer');
       const data = await response.json();
       if (response.ok) {
-        setActiveTimer(data);
+        setActiveTimers(data);
       }
     };
-    fetchActiveTimer();
+    fetchActiveTimers();
   }, []);
 
   const startTimer = async (task_id: number) => {
@@ -23,9 +23,9 @@ export function useTimer() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ task_id }),
     });
-    const data = await response.json();
+    const newTimer = await response.json();
     if (response.ok) {
-      setActiveTimer(data);
+      setActiveTimers((prev) => [...prev, newTimer]);
     }
   };
 
@@ -36,9 +36,9 @@ export function useTimer() {
       body: JSON.stringify({ time_entry_id }),
     });
     if (response.ok) {
-      setActiveTimer(null);
+      setActiveTimers((prev) => prev.filter((timer) => timer.id !== time_entry_id));
     }
   };
 
-  return { activeTimer, startTimer, stopTimer };
+  return { activeTimers, startTimer, stopTimer };
 }

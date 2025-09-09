@@ -4,12 +4,12 @@ import type { StartTimerRequest, StopTimerRequest } from '@/lib/types';
 
 export async function GET() {
   try {
-    const activeEntry = timerUtils.getActive();
-    return NextResponse.json(activeEntry);
+    const activeEntries = timerUtils.getActive();
+    return NextResponse.json(activeEntries);
   } catch (error) {
-    console.error('Error fetching active timer:', error);
+    console.error('Error fetching active timers:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch active timer' },
+      { error: 'Failed to fetch active timers' },
       { status: 500 }
     );
   }

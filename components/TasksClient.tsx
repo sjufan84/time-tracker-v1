@@ -27,7 +27,7 @@ export default function TasksClient({ initialTasks, project }: { initialTasks: T
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const { activeTimer, startTimer, stopTimer } = useTimer();
+  const { activeTimers, startTimer, stopTimer } = useTimer();
 
   const handleFormSubmit = (task: Task) => {
     if (selectedTask) {
@@ -87,24 +87,28 @@ export default function TasksClient({ initialTasks, project }: { initialTasks: T
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks.map((task) => (
-              <TableRow key={task.id}>
-                <TableCell>{task.name}</TableCell>
-                <TableCell>{task.status}</TableCell>
-                <TableCell>{formatDuration(task.total_duration || 0)}</TableCell>
-                <TableCell className="text-right">
-                  {activeTimer && activeTimer.task_id === task.id ? (
-                    <Button variant="ghost" size="icon" onClick={() => handleStopTimer(activeTimer.id)}>
-                      <Square className="h-4 w-4 text-red-500" />
-                    </Button>
-                  ) : (
-                    <Button variant="ghost" size="icon" onClick={() => handleStartTimer(task)}>
-                      <Play className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
+            {tasks.map((task) => {
+              const activeTimerForTask = activeTimers.find(
+                (timer) => timer.task_id === task.id
+              );
+              return (
+                <TableRow key={task.id}>
+                  <TableCell>{task.name}</TableCell>
+                  <TableCell>{task.status}</TableCell>
+                  <TableCell>{formatDuration(task.total_duration || 0)}</TableCell>
+                  <TableCell className="text-right">
+                    {activeTimerForTask ? (
+                      <Button variant="ghost" size="icon" onClick={() => handleStopTimer(activeTimerForTask.id)}>
+                        <Square className="h-4 w-4 text-red-500" />
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="icon" onClick={() => handleStartTimer(task)}>
+                        <Play className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
                         <span className="sr-only">Open menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
@@ -124,8 +128,9 @@ export default function TasksClient({ initialTasks, project }: { initialTasks: T
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-              </TableRow>
-            ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

@@ -124,8 +124,8 @@ export const timeEntryUtils = {
     ) as TimeEntry[];
   },
 
-  getActive: (): TimeEntry | null => {
-    return queries.getActiveTimeEntry.get() as TimeEntry | null;
+  getActive: (): TimeEntry[] => {
+    return queries.getActiveTimeEntries.all() as TimeEntry[];
   },
 
   update: (id: number, data: UpdateTimeEntryRequest): TimeEntry | null => {
@@ -171,12 +171,6 @@ export const timeEntryUtils = {
 // Timer utilities
 export const timerUtils = {
   start: (data: StartTimerRequest): TimeEntry => {
-    // Stop any active timer first
-    const activeEntry = timeEntryUtils.getActive();
-    if (activeEntry) {
-      timeEntryUtils.stop(activeEntry.id);
-    }
-
     const startTime = new Date().toISOString();
     return timeEntryUtils.create({
       task_id: data.task_id,
@@ -189,7 +183,7 @@ export const timerUtils = {
     return timeEntryUtils.stop(data.time_entry_id);
   },
 
-  getActive: (): TimeEntry | null => {
+  getActive: (): TimeEntry[] => {
     return timeEntryUtils.getActive();
   }
 };
